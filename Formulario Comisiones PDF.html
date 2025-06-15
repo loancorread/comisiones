@@ -4,19 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jornada de Reflexión - Formulario y Informe</title>
-    <!-- Tailwind CSS desde CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2pdf.js para la descarga de PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f0f2f5;
             color: #334155;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #edf2f7;
+            font-weight: 600;
+        }
+        
+        input[type="text"], input[type="date"], textarea {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.375rem;
+            background-color: #f8fafc;
+            transition: all 0.2s ease-in-out;
+        }
+        input[type="text"]:focus, input[type="date"]:focus, textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
         }
         .form-label {
             display: block;
@@ -24,30 +53,41 @@
             font-weight: 500;
             color: #475569;
         }
-        input, textarea {
-            width: 100%;
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 0.375rem;
-            transition: all 0.2s ease-in-out;
-        }
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
-        }
+        
         .btn {
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .btn:disabled {
-            cursor: not-allowed;
-            opacity: 0.6;
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
         }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background-color: #64748b;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #475569;
+            transform: translateY(-1px);
+        }
+        
+        #reportOutput {
+            min-height: 200px;
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+        }
+        
         .message-box {
             position: fixed;
             top: 20px;
@@ -58,162 +98,439 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             z-index: 1000;
             opacity: 0;
+            transition: opacity 0.5s ease-in-out;
             transform: translateY(-20px);
-            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
         }
         .message-box.show {
             opacity: 1;
             transform: translateY(0);
         }
-        .hidden {
-            display: none;
-        }
-        /* Estilos para la tabla en el informe visible */
-        #reportOutput table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        #reportOutput th, #reportOutput td {
-            border: 1px solid #e2e8f0;
-            padding: 0.5rem;
-            text-align: left;
-        }
-        #reportOutput th {
-            background-color: #f1f5f9;
-        }
+        
+        .hidden { display: none; }
     </style>
 </head>
-<body class="p-4 sm:p-8">
-    <div class="max-w-5xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg">
-        <header class="text-center mb-8 border-b pb-4">
-            <h1 class="text-3xl lg:text-4xl font-bold text-gray-800">Formulario de Planificación</h1>
-            <p class="text-gray-500 mt-2">Jornada de Reflexión</p>
-        </header>
+<body class="p-4 sm:p-8 md:p-12 lg:p-16">
+    <div class="max-w-5xl mx-auto bg-white p-6 sm:p-8 md:p-10 rounded-xl shadow-lg relative">
+        <div class="flex items-center justify-center sm:justify-start mb-8 flex-wrap">
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-center sm:text-left text-gray-800 flex-grow">Jornada de Reflexión - Formulario de Planificación</h1>
+        </div>
 
         <form id="planningForm" class="space-y-8">
-            <!-- SECCIONES COMPLETAS DEL FORMULARIO -->
-            <section class="p-4 bg-slate-50 rounded-lg shadow-sm">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b-2 border-slate-200 pb-2">I. Información General</h2>
+            <section class="p-4 bg-blue-50 rounded-lg shadow-sm">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 border-b-2 border-blue-200 pb-2">I. Información General</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label for="institucion" class="form-label">Institución:</label><input type="text" id="institucion" value="Escuela Intercultural Kallfü Mapu" readonly class="bg-gray-200 cursor-not-allowed"></div>
-                    <div><label for="sector" class="form-label">Sector:</label><input type="text" id="sector" value="Gestión Escolar" readonly class="bg-gray-200 cursor-not-allowed"></div>
-                    <div><label for="anio" class="form-label">Año:</label><input type="text" id="anio" value="2025" readonly class="bg-gray-200 cursor-not-allowed"></div>
-                    <div><label for="ubicacion" class="form-label">Ubicación:</label><input type="text" id="ubicacion" value="Vía Ocho 1081, Ñuñoa, Santiago" readonly class="bg-gray-200 cursor-not-allowed"></div>
+                    <div>
+                        <label for="institucion" class="form-label">Institución:</label>
+                        <input type="text" id="institucion" value="Escuela Intercultural Kallfü Mapu" readonly class="bg-gray-100 cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label for="sector" class="form-label">Sector:</label>
+                        <input type="text" id="sector" value="Gestión Escolar" readonly class="bg-gray-100 cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label for="anio" class="form-label">Año:</label>
+                        <input type="text" id="anio" value="2025" readonly class="bg-gray-100 cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label for="ubicacion" class="form-label">Ubicación:</label>
+                        <input type="text" id="ubicacion" value="Vía Ocho 1081, Ñuñoa, Santiago" readonly class="bg-gray-100 cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label for="contactoTel" class="form-label">Teléfono de Contacto:</label>
+                        <input type="text" id="contactoTel" value="232526900" readonly class="bg-gray-100 cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label for="contactoEmail" class="form-label">Email de Contacto:</label>
+                        <input type="text" id="contactoEmail" value="km.contacto@edununoa.cl" readonly class="bg-gray-100 cursor-not-allowed">
+                    </div>
                 </div>
             </section>
 
-            <section class="p-4 bg-blue-50 rounded-lg shadow-sm">
-                <h2 class="text-xl font-semibold text-blue-800 mb-4 border-b-2 border-blue-200 pb-2">II. Detalles de la Actividad</h2>
+            <section class="p-4 bg-green-50 rounded-lg shadow-sm">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 border-b-2 border-green-200 pb-2">II. Detalles de la Actividad</h2>
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-3">Jornada de Reflexión</h3>
                 <div class="space-y-4">
-                    <div><label for="nombreActividad" class="form-label">Nombre de la Actividad:</label><input type="text" id="nombreActividad" placeholder="Ej: Jornada de Planificación Estratégica"></div>
-                    <div><label for="fechaActividad" class="form-label">Fecha de la Actividad:</label><input type="date" id="fechaActividad"></div>
-                    <div><label for="objetivoGeneral" class="form-label">Objetivo General:</label><textarea id="objetivoGeneral" rows="3" placeholder="Describir el objetivo principal..."></textarea></div>
-                    <div><label for="participantesEsperados" class="form-label">Participantes Esperados:</label><input type="text" id="participantesEsperados" placeholder="Ej: 50 docentes, 20 apoderados"></div>
+                    <div>
+                        <label for="nombreActividad" class="form-label">Nombre de la Actividad:</label>
+                        <input type="text" id="nombreActividad" class="mt-1" placeholder="Ej: Jornada de Planificación Estratégica">
+                    </div>
+                    <div>
+                        <label for="fechaActividad" class="form-label">Fecha de la Actividad:</label>
+                        <input type="date" id="fechaActividad" class="mt-1">
+                    </div>
+                    <div>
+                        <label for="objetivoGeneral" class="form-label">Objetivo General:</label>
+                        <textarea id="objetivoGeneral" rows="3" class="mt-1" placeholder="Describir el objetivo principal de la jornada..."></textarea>
+                    </div>
+                    <div>
+                        <label for="participantesEsperados" class="form-label">Participantes Esperados:</label>
+                        <input type="text" id="participantesEsperados" class="mt-1" placeholder="Ej: 50 docentes, 20 apoderados, etc.">
+                    </div>
                 </div>
             </section>
 
             <section class="p-4 bg-purple-50 rounded-lg shadow-sm">
-                <h2 class="text-xl font-semibold text-purple-800 mb-4 border-b-2 border-purple-200 pb-2">III. Equipo Organizador</h2>
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 border-b-2 border-purple-200 pb-2">III. Equipo Organizador</h2>
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-3">Comisión Organizadora:</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <script>
-                        for(let i = 1; i <= 6; i++) { document.write(`<div><label for="miembro${i}" class="form-label">Miembro ${i}:</label><input type="text" id="miembro${i}" placeholder="Nombre completo"></div>`); }
-                    </script>
+                    <div><label for="miembro1" class="form-label">Miembro 1:</label><input type="text" id="miembro1" placeholder="Nombre del Miembro 1"></div>
+                    <div><label for="miembro2" class="form-label">Miembro 2:</label><input type="text" id="miembro2" placeholder="Nombre del Miembro 2"></div>
+                    <div><label for="miembro3" class="form-label">Miembro 3:</label><input type="text" id="miembro3" placeholder="Nombre del Miembro 3"></div>
+                    <div><label for="miembro4" class="form-label">Miembro 4:</label><input type="text" id="miembro4" placeholder="Nombre del Miembro 4"></div>
+                    <div><label for="miembro5" class="form-label">Miembro 5:</label><input type="text" id="miembro5" placeholder="Nombre del Miembro 5"></div>
+                    <div><label for="miembro6" class="form-label">Miembro 6:</label><input type="text" id="miembro6" placeholder="Nombre del Miembro 6"></div>
                 </div>
             </section>
-            
+
             <section class="p-4 bg-yellow-50 rounded-lg shadow-sm">
-                <h2 class="text-xl font-semibold text-yellow-800 mb-4 border-b-2 border-yellow-200 pb-2">IV. Recursos Necesarios</h2>
-                 <div class="space-y-4">
-                    <div><label for="presupuestoEstimado" class="form-label">Presupuesto Estimado:</label><input type="text" id="presupuestoEstimado" placeholder="Ej: $500.000 CLP"></div>
-                    <div><label for="materialesEquipos" class="form-label">Materiales y Equipos:</label><textarea id="materialesEquipos" rows="3" placeholder="Listar materiales y equipos..."></textarea></div>
-                    <div><label for="infraestructura" class="form-label">Infraestructura:</label><textarea id="infraestructura" rows="3" placeholder="Describir infraestructura requerida..."></textarea></div>
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 border-b-2 border-yellow-200 pb-2">IV. Recursos Necesarios</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="presupuestoEstimado" class="form-label">Presupuesto Estimado:</label>
+                        <input type="text" id="presupuestoEstimado" class="mt-1" placeholder="Ej: $500.000 CLP">
+                    </div>
+                    <div>
+                        <label for="materialesEquipos" class="form-label">Materiales y Equipos:</label>
+                        <textarea id="materialesEquipos" rows="3" class="mt-1" placeholder="Listar materiales y equipos específicos..."></textarea>
+                    </div>
+                    <div>
+                        <label for="infraestructura" class="form-label">Infraestructura:</label>
+                        <textarea id="infraestructura" rows="3" class="mt-1" placeholder="Describir la infraestructura requerida..."></textarea>
+                    </div>
                 </div>
             </section>
 
-            <!-- SECCIÓN V MODIFICADA -->
             <section class="p-4 bg-red-50 rounded-lg shadow-sm">
-                <h2 class="text-xl font-semibold text-red-800 mb-4 border-b-2 border-red-200 pb-2">V. Programa Detallado</h2>
-                <div class="grid grid-cols-4 gap-x-4 gap-y-2">
-                    <!-- Encabezados -->
-                    <h3 class="font-semibold text-slate-700 pb-2">Actividad</h3>
-                    <h3 class="font-semibold text-slate-700 pb-2">Responsable(s)</h3>
-                    <h3 class="font-semibold text-slate-700 pb-2">Recursos</h3>
-                    <h3 class="font-semibold text-slate-700 pb-2">Tiempo Estimado</h3>
-                    
-                    <!-- Entradas generadas con script -->
-                    <script>
-                        for (let i = 1; i <= 8; i++) {
-                            document.write(`
-                                <div class="col-span-1"><input type="text" id="actividad_${i}" placeholder="Actividad ${i}" class="bg-white"></div>
-                                <div class="col-span-1"><input type="text" id="responsable_${i}" placeholder="Responsable ${i}" class="bg-white"></div>
-                                <div class="col-span-1"><input type="text" id="recurso_${i}" placeholder="Recurso ${i}" class="bg-white"></div>
-                                <div class="col-span-1"><input type="text" id="tiempo_${i}" placeholder="Tiempo ${i}" class="bg-white"></div>
-                            `);
-                        }
-                    </script>
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 border-b-2 border-red-200 pb-2">V. Programa Detallado de Actividades</h2>
+                <div class="overflow-x-auto rounded-lg shadow-md">
+                    <table id="activityTable">
+                        <thead>
+                            <tr>
+                                <th class="w-1/4">Actividad</th>
+                                <th class="w-1/4">Responsable(s)</th>
+                                <th class="w-1/4">Recursos</th>
+                                <th class="w-1/4">Tiempo Estimado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <script>
+                                for (let i = 1; i <= 8; i++) {
+                                    document.write(`
+                                        <tr>
+                                            <td><input type="text" id="actividad_${i}" placeholder="Actividad ${i}" class="border-none bg-transparent w-full"></td>
+                                            <td><input type="text" id="responsable_${i}" placeholder="Responsable ${i}" class="border-none bg-transparent w-full"></td>
+                                            <td><input type="text" id="recurso_${i}" placeholder="Recurso ${i}" class="border-none bg-transparent w-full"></td>
+                                            <td><input type="text" id="tiempo_${i}" placeholder="Tiempo ${i}" class="border-none bg-transparent w-full"></td>
+                                        </tr>
+                                    `);
+                                }
+                            </script>
+                        </tbody>
+                    </table>
                 </div>
             </section>
-
 
             <section class="p-4 bg-teal-50 rounded-lg shadow-sm">
-                <h2 class="text-xl font-semibold text-teal-800 mb-4 border-b-2 border-teal-200 pb-2">VI. Estrategias de Comunicación</h2>
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 border-b-2 border-teal-200 pb-2">VI. Estrategias de Comunicación</h2>
                 <div class="space-y-4">
-                    <div><label for="promocionActividad" class="form-label">Promoción:</label><textarea id="promocionActividad" rows="3" placeholder="Ej: afiches, redes sociales..."></textarea></div>
-                    <div><label for="comunicacionInterna" class="form-label">Comunicación interna:</label><textarea id="comunicacionInterna" rows="3" placeholder="Ej: correos, reuniones de equipo..."></textarea></div>
-                </div>
-            </section>
-            
-            <section class="p-4 bg-indigo-50 rounded-lg shadow-sm">
-                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b-2 border-indigo-200 pb-2">VII. Reuniones de Seguimiento</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div><label for="reunion1" class="form-label">1° Reunión:</label><input type="date" id="reunion1"></div>
-                    <div><label for="reunion2" class="form-label">2° Reunión:</label><input type="date" id="reunion2"></div>
-                    <div><label for="reunion3" class="form-label">3° Reunión:</label><input type="date" id="reunion3"></div>
+                    <div>
+                        <label for="promocionActividad" class="form-label">Promoción de la actividad:</label>
+                        <textarea id="promocionActividad" rows="3" class="mt-1" placeholder="Describir cómo se promocionará..."></textarea>
+                    </div>
+                    <div>
+                        <label for="comunicacionInterna" class="form-label">Comunicación interna:</label>
+                        <textarea id="comunicacionInterna" rows="3" class="mt-1" placeholder="Describir cómo se comunicará internamente..."></textarea>
+                    </div>
                 </div>
             </section>
 
-            <!-- Botones de Acción -->
+            <section class="p-4 bg-indigo-50 rounded-lg shadow-sm">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 border-b-2 border-indigo-200 pb-2">VII. Reuniones de Seguimiento</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div><label for="reunion1" class="form-label">1° Reunión:</label><input type="date" id="reunion1" class="mt-1"></div>
+                    <div><label for="reunion2" class="form-label">2° Reunión:</label><input type="date" id="reunion2" class="mt-1"></div>
+                    <div><label for="reunion3" class="form-label">3° Reunión:</label><input type="date" id="reunion3" class="mt-1"></div>
+                </div>
+            </section>
+
             <div class="flex justify-center gap-4 mt-8">
-                <button type="button" id="downloadBtn" class="btn bg-blue-600 text-white hover:bg-blue-700">Generar y Descargar PDF</button>
-                <button type="button" onclick="clearForm()" class="btn bg-gray-500 text-white hover:bg-gray-600">Limpiar Formulario</button>
+                <button type="button" onclick="generateAndDownloadPdf()" class="btn btn-primary">Generar y Descargar Informe (PDF)</button>
+                <button type="button" onclick="clearForm()" class="btn btn-secondary">Limpiar Formulario</button>
             </div>
         </form>
 
-        <!-- Contenedor del Informe Generado (inicialmente oculto) -->
-        <section id="reportContainer" class="hidden mt-12">
-             <div id="reportContent" class="p-8 bg-white space-y-6">
-                <header class="text-center mb-8 border-b pb-4">
-                    <h1 id="reportTitle" class="text-3xl font-bold text-gray-800">Informe de Planificación</h1>
-                </header>
-                <div id="reportOutput" class="space-y-6">
-                    <!-- El contenido del informe se insertará aquí -->
-                </div>
-                <footer class="text-center text-xs text-gray-400 mt-12 pt-4 border-t">
-                    <p>Informe generado el ${new Date().toLocaleDateString('es-CL')}</p>
-                </footer>
-             </div>
+        <section id="reportContainer" class="mt-12 hidden">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-6 border-b-2 border-gray-300 pb-2">Informe de Planificación</h2>
+            <div id="reportOutput" class="space-y-6"></div>
+            <div class="flex justify-center mt-8 gap-4">
+                <button type="button" onclick="copyReport()" class="btn btn-primary">Copiar Informe</button>
+                <button type="button" onclick="generateAndDownloadPdf()" class="btn btn-secondary">Descargar de Nuevo (PDF)</button>
+            </div>
         </section>
-
     </div>
 
     <div id="messageBox" class="message-box"></div>
 
     <script>
+        const { jsPDF } = window.jspdf;
+
         function showMessage(message, type = 'info') {
             const messageBox = document.getElementById('messageBox');
             messageBox.textContent = message;
-            const colors = { success: '#4CAF50', error: '#f44336', info: '#2196F3' };
+            
+            const colors = {
+                success: '#4CAF50',
+                error: '#f44336',
+                info: '#2196F3'
+            };
             messageBox.style.backgroundColor = colors[type] || '#64748b';
+
             messageBox.classList.add('show');
-            setTimeout(() => messageBox.classList.remove('show'), 3000);
+
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000);
+        }
+        
+        function getValue(id, placeholder = 'No especificado') {
+            const element = document.getElementById(id);
+            return element ? (element.value.trim() || placeholder) : placeholder;
+        }
+
+        function splitText(text, maxWidth, doc) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = '';
+
+            for (let word of words) {
+                const testLine = currentLine + (currentLine ? ' ' : '') + word;
+                const testWidth = doc.getTextWidth(testLine);
+                
+                if (testWidth > maxWidth && currentLine) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            
+            if (currentLine) {
+                lines.push(currentLine);
+            }
+            
+            return lines;
+        }
+
+        function generateAndDownloadPdf() {
+            try {
+                showMessage('Generando PDF...', 'info');
+                
+                if (!jsPDF) {
+                    throw new Error('jsPDF no está cargado');
+                }
+
+                const doc = new jsPDF();
+                let yPosition = 20;
+                const margin = 20;
+                const pageWidth = doc.internal.pageSize.width;
+                const maxWidth = pageWidth - (margin * 2);
+                
+                // Función auxiliar para agregar texto
+                function addText(text, fontSize = 12, isBold = false, addSpacing = true) {
+                    if (yPosition > 270) { // Nueva página si no hay espacio
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+                    
+                    doc.setFontSize(fontSize);
+                    doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+                    
+                    const lines = splitText(text, maxWidth, doc);
+                    lines.forEach((line, index) => {
+                        doc.text(line, margin, yPosition);
+                        yPosition += fontSize * 0.4;
+                    });
+                    
+                    if (addSpacing) {
+                        yPosition += 5;
+                    }
+                }
+
+                function addSection(title, fontSize = 14) {
+                    yPosition += 5;
+                    doc.setFontSize(fontSize);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(title, margin, yPosition);
+                    yPosition += fontSize * 0.6;
+                    
+                    // Línea debajo del título
+                    doc.setDrawColor(0, 0, 0);
+                    doc.line(margin, yPosition, pageWidth - margin, yPosition);
+                    yPosition += 8;
+                }
+
+                // Título principal
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                const title = 'INFORME DE PLANIFICACIÓN - JORNADA DE REFLEXIÓN';
+                const titleWidth = doc.getTextWidth(title);
+                doc.text(title, (pageWidth - titleWidth) / 2, yPosition);
+                yPosition += 15;
+
+                // I. Información General
+                addSection('I. INFORMACIÓN GENERAL');
+                addText(`Institución: ${getValue('institucion')}`, 11, true, false);
+                addText(`Sector: ${getValue('sector')}`, 11, false, false);
+                addText(`Año: ${getValue('anio')}`, 11, false, false);
+                addText(`Ubicación: ${getValue('ubicacion')}`, 11, false, false);
+                addText(`Teléfono: ${getValue('contactoTel')}`, 11, false, false);
+                addText(`Email: ${getValue('contactoEmail')}`, 11, false, true);
+
+                // II. Detalles de la Actividad
+                addSection('II. DETALLES DE LA ACTIVIDAD');
+                addText(`Nombre de la Actividad: ${getValue('nombreActividad')}`, 11, true, false);
+                addText(`Fecha: ${getValue('fechaActividad')}`, 11, false, false);
+                addText(`Participantes Esperados: ${getValue('participantesEsperados')}`, 11, false, false);
+                addText(`Objetivo General: ${getValue('objetivoGeneral')}`, 11, false, true);
+
+                // III. Equipo Organizador
+                addSection('III. EQUIPO ORGANIZADOR');
+                const miembros = [];
+                for (let i = 1; i <= 6; i++) {
+                    const miembro = getValue(`miembro${i}`, '');
+                    if (miembro && miembro !== 'No especificado') {
+                        miembros.push(miembro);
+                    }
+                }
+                
+                if (miembros.length > 0) {
+                    miembros.forEach((miembro, index) => {
+                        addText(`${index + 1}. ${miembro}`, 11, false, false);
+                    });
+                } else {
+                    addText('No se han especificado miembros del equipo organizador.', 11, false, false);
+                }
+                yPosition += 5;
+
+                // IV. Recursos Necesarios
+                addSection('IV. RECURSOS NECESARIOS');
+                addText(`Presupuesto Estimado: ${getValue('presupuestoEstimado')}`, 11, true, false);
+                addText(`Materiales y Equipos: ${getValue('materialesEquipos')}`, 11, false, false);
+                addText(`Infraestructura: ${getValue('infraestructura')}`, 11, false, true);
+
+                // V. Programa Detallado
+                addSection('V. PROGRAMA DETALLADO DE ACTIVIDADES');
+                
+                let hasActivities = false;
+                for (let i = 1; i <= 8; i++) {
+                    const actividad = getValue(`actividad_${i}`, '');
+                    const responsable = getValue(`responsable_${i}`, '');
+                    const recurso = getValue(`recurso_${i}`, '');
+                    const tiempo = getValue(`tiempo_${i}`, '');
+                    
+                    if (actividad !== 'No especificado' || responsable !== 'No especificado' || 
+                        recurso !== 'No especificado' || tiempo !== 'No especificado') {
+                        hasActivities = true;
+                        
+                        addText(`Actividad ${i}:`, 11, true, false);
+                        if (actividad !== 'No especificado') addText(`  • Descripción: ${actividad}`, 10, false, false);
+                        if (responsable !== 'No especificado') addText(`  • Responsable: ${responsable}`, 10, false, false);
+                        if (recurso !== 'No especificado') addText(`  • Recursos: ${recurso}`, 10, false, false);
+                        if (tiempo !== 'No especificado') addText(`  • Tiempo: ${tiempo}`, 10, false, false);
+                        yPosition += 3;
+                    }
+                }
+                
+                if (!hasActivities) {
+                    addText('No se han especificado actividades en el programa detallado.', 11, false, true);
+                }
+
+                // VI. Estrategias de Comunicación
+                addSection('VI. ESTRATEGIAS DE COMUNICACIÓN');
+                addText(`Promoción de la actividad: ${getValue('promocionActividad')}`, 11, false, false);
+                addText(`Comunicación interna: ${getValue('comunicacionInterna')}`, 11, false, true);
+
+                // VII. Reuniones de Seguimiento
+                addSection('VII. REUNIONES DE SEGUIMIENTO');
+                addText(`Primera Reunión: ${getValue('reunion1')}`, 11, false, false);
+                addText(`Segunda Reunión: ${getValue('reunion2')}`, 11, false, false);
+                addText(`Tercera Reunión: ${getValue('reunion3')}`, 11, false, true);
+
+                // Pie de página
+                const now = new Date();
+                const fecha = now.toLocaleDateString('es-ES');
+                const hora = now.toLocaleTimeString('es-ES');
+                
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Generado el ${fecha} a las ${hora}`, margin, 285);
+
+                // Guardar archivo
+                const fechaActividad = getValue('fechaActividad', new Date().toISOString().slice(0, 10));
+                const filename = `Informe-Planificacion-${fechaActividad}.pdf`;
+                doc.save(filename);
+                
+                showMessage('PDF generado exitosamente', 'success');
+                
+                // Mostrar también el reporte en pantalla
+                generateReportContent();
+                
+            } catch (error) {
+                console.error('Error al generar PDF:', error);
+                showMessage(`Error al generar PDF: ${error.message}`, 'error');
+            }
         }
 
         function generateReportContent() {
-            const getValue = (id, placeholder = '[No especificado]') => (document.getElementById(id)?.value || placeholder).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            document.getElementById('reportContainer').classList.remove('hidden');
+            const outputDiv = document.getElementById('reportOutput');
             
-            const miembros = Array.from({ length: 6 }, (_, i) => getValue(`miembro${i+1}`, '')).filter(Boolean);
-            const miembrosHtml = miembros.length ? miembros.map(m => `<li class="ml-5 list-disc">${m}</li>`).join('') : '<li class="ml-5 list-disc">[No especificado]</li>';
+            let reportContent = `
+                <div class="p-4 bg-blue-50 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-blue-200 pb-2">I. Información General</h3>
+                    <ul class="list-none space-y-2 text-gray-700">
+                        <li><strong>Institución:</strong> ${getValue('institucion')}</li>
+                        <li><strong>Sector:</strong> ${getValue('sector')}</li>
+                        <li><strong>Año:</strong> ${getValue('anio')}</li>
+                        <li><strong>Ubicación:</strong> ${getValue('ubicacion')}</li>
+                        <li><strong>Contacto:</strong> ${getValue('contactoTel')} | ${getValue('contactoEmail')}</li>
+                    </ul>
+                </div>
+            `;
+            
+            reportContent += `
+                <div class="p-4 bg-green-50 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-green-200 pb-2">II. Detalles de la Actividad</h3>
+                    <ul class="list-none space-y-2 text-gray-700">
+                        <li><strong>Nombre de la Actividad:</strong> ${getValue('nombreActividad')}</li>
+                        <li><strong>Fecha:</strong> ${getValue('fechaActividad')}</li>
+                        <li><strong>Objetivo General:</strong> <p class="italic text-gray-600 mt-1 pl-2">${getValue('objetivoGeneral')}</p></li>
+                        <li><strong>Participantes Esperados:</strong> ${getValue('participantesEsperados')}</li>
+                    </ul>
+                </div>
+            `;
 
+            const miembros = Array.from({ length: 6 }, (_, i) => getValue(`miembro${i+1}`, null)).filter(v => v && v !== 'No especificado');
+            reportContent += `
+                <div class="p-4 bg-purple-50 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-purple-200 pb-2">III. Equipo Organizador</h3>
+                    <ul class="list-disc list-inside space-y-1 text-gray-700 ml-4">
+                        ${miembros.length > 0 ? miembros.map(m => `<li>${m}</li>`).join('') : '<li>No se han especificado miembros</li>'}
+                    </ul>
+                </div>
+            `;
+
+            reportContent += `
+                <div class="p-4 bg-yellow-50 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-yellow-200 pb-2">IV. Recursos Necesarios</h3>
+                    <ul class="list-none space-y-3 text-gray-700">
+                        <li><strong>Presupuesto Estimado:</strong> ${getValue('presupuestoEstimado')}</li>
+                        <li><strong>Materiales y Equipos:</strong> <p class="italic text-gray-600 mt-1 pl-2">${getValue('materialesEquipos')}</p></li>
+                        <li><strong>Infraestructura:</strong> <p class="italic text-gray-600 mt-1 pl-2">${getValue('infraestructura')}</p></li>
+                    </ul>
+                </div>
+            `;
+            
             let activityTableRows = '';
             let hasActivities = false;
             for (let i = 1; i <= 8; i++) {
@@ -221,77 +538,89 @@
                 const responsable = getValue(`responsable_${i}`, '');
                 const recurso = getValue(`recurso_${i}`, '');
                 const tiempo = getValue(`tiempo_${i}`, '');
-                if (actividad || responsable || recurso || tiempo) {
+                if (actividad !== 'No especificado' || responsable !== 'No especificado' || recurso !== 'No especificado' || tiempo !== 'No especificado') {
                     hasActivities = true;
-                    activityTableRows += `<tr><td>${actividad||'-'}</td><td>${responsable||'-'}</td><td>${recurso||'-'}</td><td>${tiempo||'-'}</td></tr>`;
+                    activityTableRows += `
+                        <tr>
+                            <td>${actividad === 'No especificado' ? '-' : actividad}</td>
+                            <td>${responsable === 'No especificado' ? '-' : responsable}</td>
+                            <td>${recurso === 'No especificado' ? '-' : recurso}</td>
+                            <td>${tiempo === 'No especificado' ? '-' : tiempo}</td>
+                        </tr>
+                    `;
                 }
             }
             if (!hasActivities) {
-                activityTableRows = `<tr><td colspan="4" class="text-center italic py-4">No se han especificado actividades.</td></tr>`;
+                activityTableRows = `<tr><td colspan="4" class="text-center italic text-gray-500">No se han especificado actividades.</td></tr>`;
             }
-
-            const reportHTML = `
-                <section class="p-4 bg-slate-50 rounded-lg shadow-sm"><h2 class="text-xl font-semibold text-gray-700 mb-4 border-b-2 border-slate-200 pb-2">I. Información General</h2><div class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm"><p><strong>Institución:</strong> ${getValue('institucion')}</p><p><strong>Sector:</strong> ${getValue('sector')}</p><p><strong>Año:</strong> ${getValue('anio')}</p><p><strong>Ubicación:</strong> ${getValue('ubicacion')}</p></div></section>
-                <section class="p-4 bg-blue-50 rounded-lg shadow-sm"><h2 class="text-xl font-semibold text-blue-800 mb-4 border-b-2 border-blue-200 pb-2">II. Detalles de la Actividad</h2><div class="space-y-2 text-sm"><p><strong>Nombre:</strong> ${getValue('nombreActividad')}</p><p><strong>Fecha:</strong> ${getValue('fechaActividad')}</p><p><strong>Participantes:</strong> ${getValue('participantesEsperados')}</p><div><strong>Objetivo General:</strong><p class="pl-4 italic text-gray-600">${getValue('objetivoGeneral')}</p></div></div></section>
-                <section class="p-4 bg-purple-50 rounded-lg shadow-sm"><h2 class="text-xl font-semibold text-purple-800 mb-4 border-b-2 border-purple-200 pb-2">III. Equipo Organizador</h2><ul class="space-y-1 text-sm">${miembrosHtml}</ul></section>
-                <section class="p-4 bg-yellow-50 rounded-lg shadow-sm"><h2 class="text-xl font-semibold text-yellow-800 mb-4 border-b-2 border-yellow-200 pb-2">IV. Recursos Necesarios</h2><div class="space-y-2 text-sm"><p><strong>Presupuesto:</strong> ${getValue('presupuestoEstimado')}</p><div><strong>Materiales:</strong><p class="pl-4 italic text-gray-600">${getValue('materialesEquipos')}</p></div><div><strong>Infraestructura:</strong><p class="pl-4 italic text-gray-600">${getValue('infraestructura')}</p></div></div></section>
-                <section class="p-4 bg-red-50 rounded-lg shadow-sm"><h2 class="text-xl font-semibold text-red-800 mb-4 border-b-2 border-red-200 pb-2">V. Programa Detallado</h2><table><thead><tr><th>Actividad</th><th>Responsable(s)</th><th>Recursos</th><th>Tiempo</th></tr></thead><tbody>${activityTableRows}</tbody></table></section>
-                <section class="p-4 bg-teal-50 rounded-lg shadow-sm"><h2 class="text-xl font-semibold text-teal-800 mb-4 border-b-2 border-teal-200 pb-2">VI. Estrategias de Comunicación</h2><div class="space-y-2 text-sm"><div><strong>Promoción:</strong><p class="pl-4 italic text-gray-600">${getValue('promocionActividad')}</p></div><div><strong>Comunicación Interna:</strong><p class="pl-4 italic text-gray-600">${getValue('comunicacionInterna')}</p></div></div></section>
-                <section class="p-4 bg-indigo-50 rounded-lg shadow-sm"><h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b-2 border-indigo-200 pb-2">VII. Reuniones de Seguimiento</h2><div class="grid grid-cols-3 gap-4 text-sm"><p><strong>1° Reunión:</strong> ${getValue('reunion1')}</p><p><strong>2° Reunión:</strong> ${getValue('reunion2')}</p><p><strong>3° Reunión:</strong> ${getValue('reunion3')}</p></div></section>
+            reportContent += `
+                <div class="p-4 bg-red-50 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-red-200 pb-2">V. Programa Detallado</h3>
+                    <div class="overflow-x-auto rounded-lg shadow-md">
+                        <table>
+                            <thead><tr><th>Actividad</th><th>Responsable(s)</th><th>Recursos</th><th>Tiempo Estimado</th></tr></thead>
+                            <tbody>${activityTableRows}</tbody>
+                        </table>
+                    </div>
+                </div>
             `;
             
-            const outputDiv = document.getElementById('reportOutput');
-            outputDiv.innerHTML = reportHTML;
+            reportContent += `
+                <div class="p-4 bg-teal-50 rounded-lg shadow-sm">
+                     <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-teal-200 pb-2">VI. Estrategias de Comunicación</h3>
+                     <ul class="list-none space-y-3 text-gray-700">
+                        <li><strong>Promoción:</strong> <p class="italic text-gray-600 mt-1 pl-2">${getValue('promocionActividad')}</p></li>
+                        <li><strong>Comunicación interna:</strong> <p class="italic text-gray-600 mt-1 pl-2">${getValue('comunicacionInterna')}</p></li>
+                     </ul>
+                </div>
+            `;
+
+            reportContent += `
+                <div class="p-4 bg-indigo-50 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-indigo-200 pb-2">VII. Reuniones de Seguimiento</h3>
+                    <ul class="list-none space-y-2 text-gray-700">
+                        <li><strong>1° Reunión:</strong> ${getValue('reunion1')}</li>
+                        <li><strong>2° Reunión:</strong> ${getValue('reunion2')}</li>
+                        <li><strong>3° Reunión:</strong> ${getValue('reunion3')}</li>
+                    </ul>
+                </div>
+            `;
+
+            outputDiv.innerHTML = reportContent;
         }
 
-        async function handleDownload() {
-            const downloadBtn = document.getElementById('downloadBtn');
-            downloadBtn.disabled = true;
-            downloadBtn.textContent = 'Generando...';
-            showMessage('Preparando el informe, por favor espere...', 'info');
-
-            // 1. Generar el contenido y mostrarlo en un contenedor preparado para la impresión
-            generateReportContent();
-            const reportContainer = document.getElementById('reportContainer');
-            reportContainer.classList.remove('hidden');
-
-            // 2. Pausa crucial para el renderizado
-            setTimeout(async () => {
-                const elementToPrint = document.getElementById('reportContent');
-                const fecha = document.getElementById('fechaActividad').value || new Date().toISOString().slice(0, 10);
-                const filename = `Informe-Planificacion-${fecha}.pdf`;
-                
-                const opt = {
-                    margin:       0.5,
-                    filename:     filename,
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true, logging: true, scrollY: 0 },
-                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-                };
-
-                try {
-                    // 3. Crear el PDF desde una copia del elemento ya renderizado
-                    await html2pdf().from(elementToPrint.cloneNode(true)).set(opt).save();
-                    showMessage('PDF descargado con éxito.', 'success');
-                } catch (error) {
-                    console.error('Error al generar el PDF:', error);
-                    showMessage('Hubo un error al generar el PDF.', 'error');
-                } finally {
-                    // 4. Limpieza y restauración
-                    downloadBtn.disabled = false;
-                    downloadBtn.textContent = 'Generar y Descargar PDF';
-                    reportContainer.classList.add('hidden'); // Ocultar de nuevo después de la captura
-                }
-            }, 500); // Medio segundo de espera
+        function copyReport() {
+            const reportOutput = document.getElementById('reportOutput');
+            if (navigator.clipboard && reportOutput.innerText) {
+                navigator.clipboard.writeText(reportOutput.innerText)
+                    .then(() => showMessage('Informe copiado al portapapeles.', 'success'))
+                    .catch(err => {
+                        console.error('Error al copiar:', err);
+                        showMessage('No se pudo copiar el informe.', 'error');
+                    });
+            } else {
+                 showMessage('No hay informe que copiar o el navegador no es compatible.', 'error');
+            }
         }
 
         function clearForm() {
             document.getElementById('planningForm').reset();
-            showMessage('Formulario limpiado.');
+            document.getElementById('reportContainer').classList.add('hidden');
+            document.getElementById('reportOutput').innerHTML = '';
+            showMessage('Formulario limpiado.', 'info');
             window.scrollTo(0, 0);
         }
 
-        document.getElementById('downloadBtn').addEventListener('click', handleDownload);
+        // Verificar que jsPDF esté cargado
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                if (!jsPDF) {
+                    showMessage('Error: jsPDF no se cargó correctamente', 'error');
+                } else {
+                    console.log('jsPDF cargado correctamente');
+                }
+            }, 1000);
+        });
     </script>
 </body>
 </html>
