@@ -6,8 +6,6 @@
     <title>Jornada de Reflexión - Formulario y Informe</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -17,7 +15,6 @@
             color: #334155;
         }
         
-        /* Estilos del formulario */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -110,69 +107,6 @@
         }
         
         .hidden { display: none; }
-
-        /* Estilos específicos para el PDF */
-        #pdf-content {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: white;
-        }
-
-        #pdf-content h1 {
-            text-align: center;
-            color: #2c3e50;
-            border-bottom: 3px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
-        }
-
-        #pdf-content h2 {
-            color: #34495e;
-            border-left: 4px solid #3498db;
-            padding-left: 15px;
-            margin-top: 25px;
-            margin-bottom: 15px;
-        }
-
-        #pdf-content .info-item {
-            margin-bottom: 10px;
-            padding: 5px 0;
-        }
-
-        #pdf-content .info-item strong {
-            display: inline-block;
-            width: 200px;
-            color: #2c3e50;
-        }
-
-        #pdf-content table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-        }
-
-        #pdf-content table th,
-        #pdf-content table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        #pdf-content table th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-
-        #pdf-content .section {
-            margin-bottom: 25px;
-            padding: 15px;
-            border-radius: 5px;
-            background-color: #f8f9fa;
-        }
     </style>
 </head>
 <body class="p-4 sm:p-8 md:p-12 lg:p-16">
@@ -335,22 +269,10 @@
         </section>
     </div>
 
-    <!-- Contenedor oculto para generar PDF -->
-    <div id="pdf-content" style="position: absolute; left: -9999px; top: 0; background: white; width: 210mm; padding: 20px;">
-        <!-- Contenido se genera dinámicamente -->
-    </div>
-
     <div id="messageBox" class="message-box"></div>
 
     <script>
-        // Verificar que las librerías estén cargadas
-        function checkLibraries() {
-            if (typeof html2pdf === 'undefined') {
-                console.error('html2pdf no está cargado');
-                return false;
-            }
-            return true;
-        }
+        const { jsPDF } = window.jspdf;
 
         function showMessage(message, type = 'info') {
             const messageBox = document.getElementById('messageBox');
@@ -370,197 +292,192 @@
             }, 3000);
         }
         
-        function getValue(id, placeholder = '[No especificado]') {
+        function getValue(id, placeholder = 'No especificado') {
             const element = document.getElementById(id);
             return element ? (element.value.trim() || placeholder) : placeholder;
         }
-        
-        function generatePdfContent() {
-            const pdfContainer = document.getElementById('pdf-content');
-            
-            // Crear contenido HTML simple para el PDF
-            let content = `
-                <h1>Informe de Planificación - Jornada de Reflexión</h1>
-                
-                <div class="section">
-                    <h2>I. Información General</h2>
-                    <div class="info-item"><strong>Institución:</strong> ${getValue('institucion')}</div>
-                    <div class="info-item"><strong>Sector:</strong> ${getValue('sector')}</div>
-                    <div class="info-item"><strong>Año:</strong> ${getValue('anio')}</div>
-                    <div class="info-item"><strong>Ubicación:</strong> ${getValue('ubicacion')}</div>
-                    <div class="info-item"><strong>Teléfono:</strong> ${getValue('contactoTel')}</div>
-                    <div class="info-item"><strong>Email:</strong> ${getValue('contactoEmail')}</div>
-                </div>
-                
-                <div class="section">
-                    <h2>II. Detalles de la Actividad</h2>
-                    <div class="info-item"><strong>Nombre:</strong> ${getValue('nombreActividad')}</div>
-                    <div class="info-item"><strong>Fecha:</strong> ${getValue('fechaActividad')}</div>
-                    <div class="info-item"><strong>Objetivo General:</strong> ${getValue('objetivoGeneral')}</div>
-                    <div class="info-item"><strong>Participantes:</strong> ${getValue('participantesEsperados')}</div>
-                </div>
-            `;
 
-            // Equipo Organizador
-            const miembros = [];
-            for (let i = 1; i <= 6; i++) {
-                const miembro = getValue(`miembro${i}`, '');
-                if (miembro && miembro !== '[No especificado]') {
-                    miembros.push(miembro);
+        function splitText(text, maxWidth, doc) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = '';
+
+            for (let word of words) {
+                const testLine = currentLine + (currentLine ? ' ' : '') + word;
+                const testWidth = doc.getTextWidth(testLine);
+                
+                if (testWidth > maxWidth && currentLine) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    currentLine = testLine;
                 }
             }
             
-            content += `
-                <div class="section">
-                    <h2>III. Equipo Organizador</h2>
-                    ${miembros.length > 0 ? 
-                        miembros.map((m, i) => `<div class="info-item">${i + 1}. ${m}</div>`).join('') : 
-                        '<div class="info-item">No se han especificado miembros</div>'
-                    }
-                </div>
-            `;
-
-            // Recursos
-            content += `
-                <div class="section">
-                    <h2>IV. Recursos Necesarios</h2>
-                    <div class="info-item"><strong>Presupuesto:</strong> ${getValue('presupuestoEstimado')}</div>
-                    <div class="info-item"><strong>Materiales:</strong> ${getValue('materialesEquipos')}</div>
-                    <div class="info-item"><strong>Infraestructura:</strong> ${getValue('infraestructura')}</div>
-                </div>
-            `;
-            
-            // Actividades
-            let activityRows = '';
-            let hasActivities = false;
-            
-            for (let i = 1; i <= 8; i++) {
-                const actividad = getValue(`actividad_${i}`, '');
-                const responsable = getValue(`responsable_${i}`, '');
-                const recurso = getValue(`recurso_${i}`, '');
-                const tiempo = getValue(`tiempo_${i}`, '');
-                
-                if (actividad !== '[No especificado]' || responsable !== '[No especificado]' || 
-                    recurso !== '[No especificado]' || tiempo !== '[No especificado]') {
-                    hasActivities = true;
-                    activityRows += `
-                        <tr>
-                            <td>${actividad === '[No especificado]' ? '-' : actividad}</td>
-                            <td>${responsable === '[No especificado]' ? '-' : responsable}</td>
-                            <td>${recurso === '[No especificado]' ? '-' : recurso}</td>
-                            <td>${tiempo === '[No especificado]' ? '-' : tiempo}</td>
-                        </tr>
-                    `;
-                }
+            if (currentLine) {
+                lines.push(currentLine);
             }
             
-            content += `
-                <div class="section">
-                    <h2>V. Programa Detallado</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Actividad</th>
-                                <th>Responsable</th>
-                                <th>Recursos</th>
-                                <th>Tiempo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${hasActivities ? activityRows : '<tr><td colspan="4" style="text-align: center;">No se han especificado actividades</td></tr>'}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            
-            // Comunicación
-            content += `
-                <div class="section">
-                    <h2>VI. Estrategias de Comunicación</h2>
-                    <div class="info-item"><strong>Promoción:</strong> ${getValue('promocionActividad')}</div>
-                    <div class="info-item"><strong>Comunicación interna:</strong> ${getValue('comunicacionInterna')}</div>
-                </div>
-            `;
-
-            // Reuniones
-            content += `
-                <div class="section">
-                    <h2>VII. Reuniones de Seguimiento</h2>
-                    <div class="info-item"><strong>1° Reunión:</strong> ${getValue('reunion1')}</div>
-                    <div class="info-item"><strong>2° Reunión:</strong> ${getValue('reunion2')}</div>
-                    <div class="info-item"><strong>3° Reunión:</strong> ${getValue('reunion3')}</div>
-                </div>
-            `;
-            
-            pdfContainer.innerHTML = content;
-            return pdfContainer;
+            return lines;
         }
 
         function generateAndDownloadPdf() {
-            if (!checkLibraries()) {
-                showMessage('Error: Librerías no cargadas correctamente', 'error');
-                return;
-            }
-
-            showMessage('Generando PDF...', 'info');
-            
             try {
-                // Generar contenido para PDF
-                const pdfElement = generatePdfContent();
+                showMessage('Generando PDF...', 'info');
                 
-                // Hacer visible temporalmente para renderizado
-                pdfElement.style.position = 'static';
-                pdfElement.style.left = 'auto';
-                pdfElement.style.visibility = 'hidden';
-                
-                const fecha = getValue('fechaActividad', new Date().toISOString().slice(0, 10));
-                const filename = `Informe-Planificacion-${fecha}.pdf`;
-                
-                const options = {
-                    margin: 0.5,
-                    filename: filename,
-                    image: { 
-                        type: 'jpeg', 
-                        quality: 0.95 
-                    },
-                    html2canvas: { 
-                        scale: 1.5,
-                        useCORS: true,
-                        allowTaint: false,
-                        backgroundColor: '#ffffff',
-                        letterRendering: true,
-                        logging: true
-                    },
-                    jsPDF: { 
-                        unit: 'in', 
-                        format: 'letter', 
-                        orientation: 'portrait' 
-                    }
-                };
+                if (!jsPDF) {
+                    throw new Error('jsPDF no está cargado');
+                }
 
-                // Generar PDF
-                html2pdf()
-                    .set(options)
-                    .from(pdfElement)
-                    .save()
-                    .then(() => {
-                        showMessage('PDF generado exitosamente', 'success');
-                        generateReportContent(); // Mostrar también en pantalla
-                    })
-                    .catch(error => {
-                        console.error('Error generando PDF:', error);
-                        showMessage('Error al generar PDF: ' + error.message, 'error');
-                    })
-                    .finally(() => {
-                        // Ocultar elemento nuevamente
-                        pdfElement.style.position = 'absolute';
-                        pdfElement.style.left = '-9999px';
-                        pdfElement.style.visibility = 'visible';
+                const doc = new jsPDF();
+                let yPosition = 20;
+                const margin = 20;
+                const pageWidth = doc.internal.pageSize.width;
+                const maxWidth = pageWidth - (margin * 2);
+                
+                // Función auxiliar para agregar texto
+                function addText(text, fontSize = 12, isBold = false, addSpacing = true) {
+                    if (yPosition > 270) { // Nueva página si no hay espacio
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+                    
+                    doc.setFontSize(fontSize);
+                    doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+                    
+                    const lines = splitText(text, maxWidth, doc);
+                    lines.forEach((line, index) => {
+                        doc.text(line, margin, yPosition);
+                        yPosition += fontSize * 0.4;
                     });
                     
+                    if (addSpacing) {
+                        yPosition += 5;
+                    }
+                }
+
+                function addSection(title, fontSize = 14) {
+                    yPosition += 5;
+                    doc.setFontSize(fontSize);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(title, margin, yPosition);
+                    yPosition += fontSize * 0.6;
+                    
+                    // Línea debajo del título
+                    doc.setDrawColor(0, 0, 0);
+                    doc.line(margin, yPosition, pageWidth - margin, yPosition);
+                    yPosition += 8;
+                }
+
+                // Título principal
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                const title = 'INFORME DE PLANIFICACIÓN - JORNADA DE REFLEXIÓN';
+                const titleWidth = doc.getTextWidth(title);
+                doc.text(title, (pageWidth - titleWidth) / 2, yPosition);
+                yPosition += 15;
+
+                // I. Información General
+                addSection('I. INFORMACIÓN GENERAL');
+                addText(`Institución: ${getValue('institucion')}`, 11, true, false);
+                addText(`Sector: ${getValue('sector')}`, 11, false, false);
+                addText(`Año: ${getValue('anio')}`, 11, false, false);
+                addText(`Ubicación: ${getValue('ubicacion')}`, 11, false, false);
+                addText(`Teléfono: ${getValue('contactoTel')}`, 11, false, false);
+                addText(`Email: ${getValue('contactoEmail')}`, 11, false, true);
+
+                // II. Detalles de la Actividad
+                addSection('II. DETALLES DE LA ACTIVIDAD');
+                addText(`Nombre de la Actividad: ${getValue('nombreActividad')}`, 11, true, false);
+                addText(`Fecha: ${getValue('fechaActividad')}`, 11, false, false);
+                addText(`Participantes Esperados: ${getValue('participantesEsperados')}`, 11, false, false);
+                addText(`Objetivo General: ${getValue('objetivoGeneral')}`, 11, false, true);
+
+                // III. Equipo Organizador
+                addSection('III. EQUIPO ORGANIZADOR');
+                const miembros = [];
+                for (let i = 1; i <= 6; i++) {
+                    const miembro = getValue(`miembro${i}`, '');
+                    if (miembro && miembro !== 'No especificado') {
+                        miembros.push(miembro);
+                    }
+                }
+                
+                if (miembros.length > 0) {
+                    miembros.forEach((miembro, index) => {
+                        addText(`${index + 1}. ${miembro}`, 11, false, false);
+                    });
+                } else {
+                    addText('No se han especificado miembros del equipo organizador.', 11, false, false);
+                }
+                yPosition += 5;
+
+                // IV. Recursos Necesarios
+                addSection('IV. RECURSOS NECESARIOS');
+                addText(`Presupuesto Estimado: ${getValue('presupuestoEstimado')}`, 11, true, false);
+                addText(`Materiales y Equipos: ${getValue('materialesEquipos')}`, 11, false, false);
+                addText(`Infraestructura: ${getValue('infraestructura')}`, 11, false, true);
+
+                // V. Programa Detallado
+                addSection('V. PROGRAMA DETALLADO DE ACTIVIDADES');
+                
+                let hasActivities = false;
+                for (let i = 1; i <= 8; i++) {
+                    const actividad = getValue(`actividad_${i}`, '');
+                    const responsable = getValue(`responsable_${i}`, '');
+                    const recurso = getValue(`recurso_${i}`, '');
+                    const tiempo = getValue(`tiempo_${i}`, '');
+                    
+                    if (actividad !== 'No especificado' || responsable !== 'No especificado' || 
+                        recurso !== 'No especificado' || tiempo !== 'No especificado') {
+                        hasActivities = true;
+                        
+                        addText(`Actividad ${i}:`, 11, true, false);
+                        if (actividad !== 'No especificado') addText(`  • Descripción: ${actividad}`, 10, false, false);
+                        if (responsable !== 'No especificado') addText(`  • Responsable: ${responsable}`, 10, false, false);
+                        if (recurso !== 'No especificado') addText(`  • Recursos: ${recurso}`, 10, false, false);
+                        if (tiempo !== 'No especificado') addText(`  • Tiempo: ${tiempo}`, 10, false, false);
+                        yPosition += 3;
+                    }
+                }
+                
+                if (!hasActivities) {
+                    addText('No se han especificado actividades en el programa detallado.', 11, false, true);
+                }
+
+                // VI. Estrategias de Comunicación
+                addSection('VI. ESTRATEGIAS DE COMUNICACIÓN');
+                addText(`Promoción de la actividad: ${getValue('promocionActividad')}`, 11, false, false);
+                addText(`Comunicación interna: ${getValue('comunicacionInterna')}`, 11, false, true);
+
+                // VII. Reuniones de Seguimiento
+                addSection('VII. REUNIONES DE SEGUIMIENTO');
+                addText(`Primera Reunión: ${getValue('reunion1')}`, 11, false, false);
+                addText(`Segunda Reunión: ${getValue('reunion2')}`, 11, false, false);
+                addText(`Tercera Reunión: ${getValue('reunion3')}`, 11, false, true);
+
+                // Pie de página
+                const now = new Date();
+                const fecha = now.toLocaleDateString('es-ES');
+                const hora = now.toLocaleTimeString('es-ES');
+                
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Generado el ${fecha} a las ${hora}`, margin, 285);
+
+                // Guardar archivo
+                const fechaActividad = getValue('fechaActividad', new Date().toISOString().slice(0, 10));
+                const filename = `Informe-Planificacion-${fechaActividad}.pdf`;
+                doc.save(filename);
+                
+                showMessage('PDF generado exitosamente', 'success');
+                
+                // Mostrar también el reporte en pantalla
+                generateReportContent();
+                
             } catch (error) {
-                console.error('Error en generateAndDownloadPdf:', error);
-                showMessage('Error inesperado al generar PDF', 'error');
+                console.error('Error al generar PDF:', error);
+                showMessage(`Error al generar PDF: ${error.message}`, 'error');
             }
         }
 
@@ -593,7 +510,7 @@
                 </div>
             `;
 
-            const miembros = Array.from({ length: 6 }, (_, i) => getValue(`miembro${i+1}`, null)).filter(v => v && v !== '[No especificado]');
+            const miembros = Array.from({ length: 6 }, (_, i) => getValue(`miembro${i+1}`, null)).filter(v => v && v !== 'No especificado');
             reportContent += `
                 <div class="p-4 bg-purple-50 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-purple-200 pb-2">III. Equipo Organizador</h3>
@@ -621,14 +538,14 @@
                 const responsable = getValue(`responsable_${i}`, '');
                 const recurso = getValue(`recurso_${i}`, '');
                 const tiempo = getValue(`tiempo_${i}`, '');
-                if (actividad !== '[No especificado]' || responsable !== '[No especificado]' || recurso !== '[No especificado]' || tiempo !== '[No especificado]') {
+                if (actividad !== 'No especificado' || responsable !== 'No especificado' || recurso !== 'No especificado' || tiempo !== 'No especificado') {
                     hasActivities = true;
                     activityTableRows += `
                         <tr>
-                            <td>${actividad === '[No especificado]' ? '-' : actividad}</td>
-                            <td>${responsable === '[No especificado]' ? '-' : responsable}</td>
-                            <td>${recurso === '[No especificado]' ? '-' : recurso}</td>
-                            <td>${tiempo === '[No especificado]' ? '-' : tiempo}</td>
+                            <td>${actividad === 'No especificado' ? '-' : actividad}</td>
+                            <td>${responsable === 'No especificado' ? '-' : responsable}</td>
+                            <td>${recurso === 'No especificado' ? '-' : recurso}</td>
+                            <td>${tiempo === 'No especificado' ? '-' : tiempo}</td>
                         </tr>
                     `;
                 }
@@ -694,11 +611,13 @@
             window.scrollTo(0, 0);
         }
 
-        // Verificar carga de librerías al cargar la página
+        // Verificar que jsPDF esté cargado
         window.addEventListener('load', function() {
             setTimeout(() => {
-                if (!checkLibraries()) {
-                    showMessage('Advertencia: Algunas librerías no se cargaron correctamente', 'error');
+                if (!jsPDF) {
+                    showMessage('Error: jsPDF no se cargó correctamente', 'error');
+                } else {
+                    console.log('jsPDF cargado correctamente');
                 }
             }, 1000);
         });
