@@ -7,14 +7,83 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Fuentes personalizadas para Inter */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Fondo gris claro */
-            color: #334155; /* Color de texto base */
+            background-color: #f0f2f5;
+            color: #334155;
         }
-        /* Estilos específicos para tablas */
+        
+        /* Estilos específicos para PDF */
+        .pdf-container {
+            background: white;
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+            color: #334155;
+        }
+        
+        .pdf-container h1 {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+        
+        .pdf-container h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e5e7eb;
+            color: #374151;
+        }
+        
+        .pdf-container .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .pdf-container .section-blue { background-color: #f0f9ff; }
+        .pdf-container .section-green { background-color: #f0fdf4; }
+        .pdf-container .section-purple { background-color: #faf5ff; }
+        .pdf-container .section-yellow { background-color: #fffbeb; }
+        .pdf-container .section-red { background-color: #fef2f2; }
+        .pdf-container .section-teal { background-color: #f0fdfa; }
+        .pdf-container .section-indigo { background-color: #f0f9ff; }
+        
+        .pdf-container ul {
+            margin: 10px 0;
+            padding-left: 0;
+        }
+        
+        .pdf-container li {
+            margin-bottom: 8px;
+            list-style: none;
+        }
+        
+        .pdf-container table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .pdf-container th, .pdf-container td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #d1d5db;
+        }
+        
+        .pdf-container th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        
+        /* Estilos originales del formulario */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -23,71 +92,71 @@
         th, td {
             padding: 0.75rem;
             text-align: left;
-            border-bottom: 1px solid #e2e8f0; /* Borde inferior para celdas */
+            border-bottom: 1px solid #e2e8f0;
         }
         th {
-            background-color: #edf2f7; /* Fondo para encabezados de tabla */
+            background-color: #edf2f7;
             font-weight: 600;
         }
-        /* Estilos para inputs */
+        
         input[type="text"], input[type="date"], textarea {
             width: 100%;
             padding: 0.6rem 0.8rem;
             border: 1px solid #cbd5e1;
-            border-radius: 0.375rem; /* rounded-md */
-            background-color: #f8fafc; /* slate-50 */
+            border-radius: 0.375rem;
+            background-color: #f8fafc;
             transition: all 0.2s ease-in-out;
         }
         input[type="text"]:focus, input[type="date"]:focus, textarea:focus {
             outline: none;
-            border-color: #3b82f6; /* blue-500 */
+            border-color: #3b82f6;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
         textarea {
-            resize: vertical; /* Permite redimensionar verticalmente */
+            resize: vertical;
             min-height: 60px;
         }
         .form-label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 500;
-            color: #475569; /* slate-600 */
+            color: #475569;
         }
-        /* Estilo para los botones */
+        
         .btn {
             padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem; /* rounded-lg */
+            border-radius: 0.5rem;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .btn-primary {
-            background-color: #2563eb; /* blue-700 */
+            background-color: #2563eb;
             color: white;
         }
         .btn-primary:hover {
-            background-color: #1d4ed8; /* blue-800 */
+            background-color: #1d4ed8;
             transform: translateY(-1px);
         }
         .btn-secondary {
-            background-color: #64748b; /* slate-500 */
+            background-color: #64748b;
             color: white;
         }
         .btn-secondary:hover {
-            background-color: #475569; /* slate-600 */
+            background-color: #475569;
             transform: translateY(-1px);
         }
-        /* Estilos para el contenedor del informe */
+        
         #reportOutput {
             min-height: 200px;
             background-color: #fff;
             padding: 2rem;
-            border-radius: 0.75rem; /* rounded-xl */
+            border-radius: 0.75rem;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
             border: 1px solid #e2e8f0;
         }
-        /* Estilos para el mensaje de notificación */
+        
         .message-box {
             position: fixed;
             top: 20px;
@@ -105,6 +174,8 @@
             opacity: 1;
             transform: translateY(0);
         }
+        
+        .hidden { display: none; }
     </style>
 </head>
 <body class="p-4 sm:p-8 md:p-12 lg:p-16">
@@ -259,8 +330,7 @@
 
         <section id="reportContainer" class="mt-12 hidden">
             <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-6 border-b-2 border-gray-300 pb-2">Informe de Planificación</h2>
-            <div id="reportOutput" class="space-y-6">
-                </div>
+            <div id="reportOutput" class="space-y-6"></div>
             <div class="flex justify-center mt-8 gap-4">
                 <button type="button" onclick="copyReport()" class="btn btn-primary">Copiar Informe</button>
                 <button type="button" onclick="generateAndDownloadPdf()" class="btn btn-secondary">Descargar de Nuevo (PDF)</button>
@@ -271,20 +341,14 @@
     <div id="messageBox" class="message-box"></div>
 
     <script>
-        /**
-         * Muestra un mensaje temporal al usuario.
-         * @param {string} message - El mensaje a mostrar.
-         * @param {string} type - El tipo de mensaje ('success', 'error', 'info').
-         */
         function showMessage(message, type = 'info') {
             const messageBox = document.getElementById('messageBox');
             messageBox.textContent = message;
             
-            // Asigna color basado en el tipo
             const colors = {
-                success: '#4CAF50', // Green
-                error: '#f44336',   // Red
-                info: '#2196F3'     // Blue
+                success: '#4CAF50',
+                error: '#f44336',
+                info: '#2196F3'
             };
             messageBox.style.backgroundColor = colors[type] || '#64748b';
 
@@ -292,20 +356,155 @@
 
             setTimeout(() => {
                 messageBox.classList.remove('show');
-            }, 3000); // Ocultar después de 3 segundos
+            }, 3000);
         }
         
-        /**
-         * Genera el contenido HTML del informe a partir de los datos del formulario.
-         */
+        function getValue(id, placeholder = '[No especificado]') {
+            const element = document.getElementById(id);
+            return element ? (element.value || placeholder) : placeholder;
+        }
+        
+        function generatePdfContent() {
+            // Información General
+            let content = `
+                <div class="pdf-container">
+                    <h1>Informe de Planificación - Jornada de Reflexión</h1>
+                    
+                    <div class="section section-blue">
+                        <h3>I. Información General</h3>
+                        <ul>
+                            <li><strong>Institución:</strong> ${getValue('institucion')}</li>
+                            <li><strong>Sector:</strong> ${getValue('sector')}</li>
+                            <li><strong>Año:</strong> ${getValue('anio')}</li>
+                            <li><strong>Ubicación:</strong> ${getValue('ubicacion')}</li>
+                            <li><strong>Contacto:</strong> ${getValue('contactoTel')} | ${getValue('contactoEmail')}</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="section section-green">
+                        <h3>II. Detalles de la Actividad</h3>
+                        <ul>
+                            <li><strong>Nombre de la Actividad:</strong> ${getValue('nombreActividad')}</li>
+                            <li><strong>Fecha:</strong> ${getValue('fechaActividad')}</li>
+                            <li><strong>Objetivo General:</strong><br>${getValue('objetivoGeneral')}</li>
+                            <li><strong>Participantes Esperados:</strong> ${getValue('participantesEsperados')}</li>
+                        </ul>
+                    </div>
+            `;
+
+            // Equipo Organizador
+            const miembros = [];
+            for (let i = 1; i <= 6; i++) {
+                const miembro = getValue(`miembro${i}`, '');
+                if (miembro && miembro !== '[No especificado]') {
+                    miembros.push(miembro);
+                }
+            }
+            
+            content += `
+                <div class="section section-purple">
+                    <h3>III. Equipo Organizador</h3>
+                    <ul>
+                        ${miembros.length > 0 ? 
+                            miembros.map(m => `<li>• ${m}</li>`).join('') : 
+                            '<li>No se han especificado miembros</li>'
+                        }
+                    </ul>
+                </div>
+            `;
+
+            // Recursos Necesarios
+            content += `
+                <div class="section section-yellow">
+                    <h3>IV. Recursos Necesarios</h3>
+                    <ul>
+                        <li><strong>Presupuesto Estimado:</strong> ${getValue('presupuestoEstimado')}</li>
+                        <li><strong>Materiales y Equipos:</strong><br>${getValue('materialesEquipos')}</li>
+                        <li><strong>Infraestructura:</strong><br>${getValue('infraestructura')}</li>
+                    </ul>
+                </div>
+            `;
+            
+            // Programa Detallado
+            let activityTableRows = '';
+            let hasActivities = false;
+            
+            for (let i = 1; i <= 8; i++) {
+                const actividad = getValue(`actividad_${i}`, '');
+                const responsable = getValue(`responsable_${i}`, '');
+                const recurso = getValue(`recurso_${i}`, '');
+                const tiempo = getValue(`tiempo_${i}`, '');
+                
+                if (actividad !== '[No especificado]' || responsable !== '[No especificado]' || 
+                    recurso !== '[No especificado]' || tiempo !== '[No especificado]') {
+                    hasActivities = true;
+                    activityTableRows += `
+                        <tr>
+                            <td>${actividad === '[No especificado]' ? '-' : actividad}</td>
+                            <td>${responsable === '[No especificado]' ? '-' : responsable}</td>
+                            <td>${recurso === '[No especificado]' ? '-' : recurso}</td>
+                            <td>${tiempo === '[No especificado]' ? '-' : tiempo}</td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            if (!hasActivities) {
+                activityTableRows = '<tr><td colspan="4" style="text-align: center; font-style: italic;">No se han especificado actividades</td></tr>';
+            }
+            
+            content += `
+                <div class="section section-red">
+                    <h3>V. Programa Detallado</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Actividad</th>
+                                <th>Responsable(s)</th>
+                                <th>Recursos</th>
+                                <th>Tiempo Estimado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${activityTableRows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // Estrategias de Comunicación
+            content += `
+                <div class="section section-teal">
+                    <h3>VI. Estrategias de Comunicación</h3>
+                    <ul>
+                        <li><strong>Promoción:</strong><br>${getValue('promocionActividad')}</li>
+                        <li><strong>Comunicación interna:</strong><br>${getValue('comunicacionInterna')}</li>
+                    </ul>
+                </div>
+            `;
+
+            // Reuniones de Seguimiento
+            content += `
+                <div class="section section-indigo">
+                    <h3>VII. Reuniones de Seguimiento</h3>
+                    <ul>
+                        <li><strong>1° Reunión:</strong> ${getValue('reunion1')}</li>
+                        <li><strong>2° Reunión:</strong> ${getValue('reunion2')}</li>
+                        <li><strong>3° Reunión:</strong> ${getValue('reunion3')}</li>
+                    </ul>
+                </div>
+                </div>
+            `;
+            
+            return content;
+        }
+
         function generateReportContent() {
             document.getElementById('reportContainer').classList.remove('hidden');
             const outputDiv = document.getElementById('reportOutput');
             
-            // Helper para obtener valor o un placeholder
             const getValue = (id, placeholder = '[No especificado]') => document.getElementById(id).value || placeholder;
             
-            // I. Información General
             let reportContent = `
                 <div class="p-4 bg-blue-50 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-blue-200 pb-2">I. Información General</h3>
@@ -319,7 +518,6 @@
                 </div>
             `;
             
-            // II. Detalles de la Actividad
             reportContent += `
                 <div class="p-4 bg-green-50 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-green-200 pb-2">II. Detalles de la Actividad</h3>
@@ -332,7 +530,6 @@
                 </div>
             `;
 
-            // III. Equipo Organizador
             const miembros = Array.from({ length: 6 }, (_, i) => getValue(`miembro${i+1}`, null)).filter(Boolean);
             reportContent += `
                 <div class="p-4 bg-purple-50 rounded-lg shadow-sm">
@@ -343,8 +540,7 @@
                 </div>
             `;
 
-            // IV. Recursos Necesarios
-             reportContent += `
+            reportContent += `
                 <div class="p-4 bg-yellow-50 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-yellow-200 pb-2">IV. Recursos Necesarios</h3>
                     <ul class="list-none space-y-3 text-gray-700">
@@ -355,7 +551,6 @@
                 </div>
             `;
             
-            // V. Programa Detallado
             let activityTableRows = '';
             let hasActivities = false;
             for (let i = 1; i <= 8; i++) {
@@ -390,7 +585,6 @@
                 </div>
             `;
             
-            // VI. Estrategias de Comunicación
             reportContent += `
                 <div class="p-4 bg-teal-50 rounded-lg shadow-sm">
                      <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-teal-200 pb-2">VI. Estrategias de Comunicación</h3>
@@ -401,7 +595,6 @@
                 </div>
             `;
 
-            // VII. Reuniones de Seguimiento
             reportContent += `
                 <div class="p-4 bg-indigo-50 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-indigo-200 pb-2">VII. Reuniones de Seguimiento</h3>
@@ -416,42 +609,57 @@
             outputDiv.innerHTML = reportContent;
         }
 
-        /**
-         * Función principal que genera el contenido, lo muestra y lo descarga como PDF.
-         */
         function generateAndDownloadPdf() {
-            // 1. Generar el contenido y mostrarlo en la página.
-            generateReportContent();
+            showMessage('Generando PDF, por favor espere...', 'info');
             
-            const reportElement = document.getElementById('reportContainer');
+            // Crear un elemento temporal para el PDF
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = generatePdfContent();
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '0';
+            tempDiv.style.width = '210mm'; // Ancho A4
+            tempDiv.style.background = 'white';
+            document.body.appendChild(tempDiv);
+            
             const fecha = document.getElementById('fechaActividad').value || new Date().toISOString().slice(0, 10);
             const filename = `Informe-Planificacion-${fecha}.pdf`;
             
-            showMessage('Generando PDF, por favor espere...', 'info');
+            const opt = {
+                margin:       0.5,
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    letterRendering: true,
+                    allowTaint: false,
+                    backgroundColor: '#ffffff'
+                },
+                jsPDF:        { 
+                    unit: 'in', 
+                    format: 'letter', 
+                    orientation: 'portrait',
+                    compress: true
+                }
+            };
 
-            // 2. Esperar un momento para que el navegador renderice el contenido.
-            setTimeout(() => {
-                const opt = {
-                    margin:       [0.5, 0.5, 0.5, 0.5], // Margen [arriba, izq, abajo, der] en pulgadas
-                    filename:     filename,
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true },
-                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-                };
-
-                // 3. Crear el PDF a partir de un CLON del elemento.
-                // Esto es clave para evitar problemas de renderizado en tiempo real.
-                html2pdf().from(reportElement.cloneNode(true)).set(opt).save()
-                    .catch(err => {
-                        console.error('Error al generar el PDF:', err);
-                        showMessage('Hubo un error al generar el PDF.', 'error');
-                    });
-            }, 500); // 500ms de retraso.
+            html2pdf().from(tempDiv).set(opt).save()
+                .then(() => {
+                    showMessage('PDF generado exitosamente', 'success');
+                    // Mostrar también el reporte en pantalla
+                    generateReportContent();
+                })
+                .catch(err => {
+                    console.error('Error al generar el PDF:', err);
+                    showMessage('Hubo un error al generar el PDF.', 'error');
+                })
+                .finally(() => {
+                    // Limpiar el elemento temporal
+                    document.body.removeChild(tempDiv);
+                });
         }
 
-        /**
-         * Copia el texto del informe generado al portapapeles.
-         */
         function copyReport() {
             const reportOutput = document.getElementById('reportOutput');
             if (navigator.clipboard && reportOutput.innerText) {
@@ -466,16 +674,10 @@
             }
         }
 
-        /**
-         * Limpia todos los campos del formulario y oculta el informe.
-         */
         function clearForm() {
             document.getElementById('planningForm').reset();
-            
-            // Ocultar la sección del informe y limpiar su contenido
             document.getElementById('reportContainer').classList.add('hidden');
             document.getElementById('reportOutput').innerHTML = '';
-
             showMessage('Formulario limpiado.', 'info');
             window.scrollTo(0, 0);
         }
