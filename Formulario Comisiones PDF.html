@@ -179,6 +179,10 @@
                     <div><label for="miembro4" class="form-label">Miembro 4:</label><input type="text" id="miembro4" placeholder="Nombre del Miembro 4"></div>
                     <div><label for="miembro5" class="form-label">Miembro 5:</label><input type="text" id="miembro5" placeholder="Nombre del Miembro 5"></div>
                     <div><label for="miembro6" class="form-label">Miembro 6:</label><input type="text" id="miembro6" placeholder="Nombre del Miembro 6"></div>
+                    <div><label for="miembro7" class="form-label">Miembro 7:</label><input type="text" id="miembro7" placeholder="Nombre del Miembro 7"></div>
+                    <div><label for="miembro8" class="form-label">Miembro 8:</label><input type="text" id="miembro8" placeholder="Nombre del Miembro 8"></div>
+                    <div><label for="miembro9" class="form-label">Miembro 9:</label><input type="text" id="miembro9" placeholder="Nombre del Miembro 9"></div>
+                    <div><label for="miembro10" class="form-label">Miembro 10:</label><input type="text" id="miembro10" placeholder="Nombre del Miembro 10"></div>
                 </div>
             </section>
 
@@ -396,7 +400,7 @@
                 // III. Equipo Organizador
                 addSection('III. EQUIPO ORGANIZADOR');
                 const miembros = [];
-                for (let i = 1; i <= 6; i++) {
+                for (let i = 1; i <= 10; i++) {
                     const miembro = getValue(`miembro${i}`, '');
                     if (miembro && miembro !== 'No especificado') {
                         miembros.push(miembro);
@@ -510,7 +514,7 @@
                 </div>
             `;
 
-            const miembros = Array.from({ length: 6 }, (_, i) => getValue(`miembro${i+1}`, null)).filter(v => v && v !== 'No especificado');
+            const miembros = Array.from({ length: 10 }, (_, i) => getValue(`miembro${i+1}`, null)).filter(v => v && v !== 'No especificado');
             reportContent += `
                 <div class="p-4 bg-purple-50 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-purple-200 pb-2">III. Equipo Organizador</h3>
