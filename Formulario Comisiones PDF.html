@@ -141,7 +141,7 @@
                     </div>
                     <div>
                         <label for="contactoEmail" class="form-label">Email de Contacto:</label>
-                        <input type="text" id="contactoEmail" value="km.ege@edununoa.cl" readonly class="bg-gray-100 cursor-not-allowed">
+                        <input type="text" id="contactoEmail" value="km.contacto@edununoa.cl" readonly class="bg-gray-100 cursor-not-allowed">
                     </div>
                 </div>
             </section>
@@ -276,7 +276,9 @@
     <div id="messageBox" class="message-box"></div>
 
     <script>
-        const { jsPDF } = window.jspdf;
+        // Ensure jsPDF is available globally, if not, it will be undefined
+        // We will check for its existence before using it.
+        const jspdfInstance = window.jspdf ? window.jspdf.jsPDF : undefined;
 
         function showMessage(message, type = 'info') {
             const messageBox = document.getElementById('messageBox');
@@ -301,23 +303,28 @@
             return element ? (element.value.trim() || placeholder) : placeholder;
         }
 
+        // Helper function to split text into lines that fit within a given width
         function splitText(text, maxWidth, doc) {
             const words = text.split(' ');
             const lines = [];
             let currentLine = '';
 
             for (let word of words) {
+                // Test if adding the next word exceeds maxWidth
                 const testLine = currentLine + (currentLine ? ' ' : '') + word;
                 const testWidth = doc.getTextWidth(testLine);
                 
                 if (testWidth > maxWidth && currentLine) {
+                    // If it exceeds and there's a current line, push currentLine and start new line with word
                     lines.push(currentLine);
                     currentLine = word;
                 } else {
+                    // Otherwise, just append the word to the current line
                     currentLine = testLine;
                 }
             }
             
+            // Add any remaining text
             if (currentLine) {
                 lines.push(currentLine);
             }
@@ -329,19 +336,20 @@
             try {
                 showMessage('Generando PDF...', 'info');
                 
-                if (!jsPDF) {
-                    throw new Error('jsPDF no está cargado');
+                // Check if jsPDF is available
+                if (!jspdfInstance) {
+                    throw new Error('jsPDF no está cargado. Por favor, recargue la página o revise la conexión a internet.');
                 }
 
-                const doc = new jsPDF();
+                const doc = new jspdfInstance(); // Use the checked instance
                 let yPosition = 20;
                 const margin = 20;
                 const pageWidth = doc.internal.pageSize.width;
                 const maxWidth = pageWidth - (margin * 2);
                 
-                // Función auxiliar para agregar texto
+                // Auxiliary function to add text to the PDF
                 function addText(text, fontSize = 12, isBold = false, addSpacing = true) {
-                    if (yPosition > 270) { // Nueva página si no hay espacio
+                    if (yPosition > 270) { // New page if there is no space
                         doc.addPage();
                         yPosition = 20;
                     }
@@ -350,38 +358,41 @@
                     doc.setFont('helvetica', isBold ? 'bold' : 'normal');
                     
                     const lines = splitText(text, maxWidth, doc);
-                    lines.forEach((line, index) => {
+                    lines.forEach((line) => {
                         doc.text(line, margin, yPosition);
-                        yPosition += fontSize * 0.4;
+                        // Increase line spacing to prevent overlap
+                        yPosition += fontSize * 1.2; // Adjusted from 0.4 to 1.2
                     });
                     
                     if (addSpacing) {
-                        yPosition += 5;
+                        yPosition += 5; // Additional spacing after the block of text
                     }
                 }
 
+                // Auxiliary function to add a section title
                 function addSection(title, fontSize = 14) {
-                    yPosition += 5;
+                    yPosition += 5; // Space before the section title
                     doc.setFontSize(fontSize);
                     doc.setFont('helvetica', 'bold');
                     doc.text(title, margin, yPosition);
-                    yPosition += fontSize * 0.6;
+                    // Increase spacing between title and the line below
+                    yPosition += fontSize * 1.0; // Adjusted from 0.6 to 1.0
                     
-                    // Línea debajo del título
+                    // Line below the title
                     doc.setDrawColor(0, 0, 0);
                     doc.line(margin, yPosition, pageWidth - margin, yPosition);
-                    yPosition += 8;
+                    yPosition += 8; // Space after the line
                 }
 
-                // Título principal
+                // Main Title
                 doc.setFontSize(18);
                 doc.setFont('helvetica', 'bold');
                 const title = 'INFORME DE PLANIFICACIÓN - JORNADA DE REFLEXIÓN';
                 const titleWidth = doc.getTextWidth(title);
                 doc.text(title, (pageWidth - titleWidth) / 2, yPosition);
-                yPosition += 15;
+                yPosition += 15; // Space after the main title
 
-                // I. Información General
+                // I. General Information
                 addSection('I. INFORMACIÓN GENERAL');
                 addText(`Institución: ${getValue('institucion')}`, 11, true, false);
                 addText(`Sector: ${getValue('sector')}`, 11, false, false);
@@ -390,14 +401,14 @@
                 addText(`Teléfono: ${getValue('contactoTel')}`, 11, false, false);
                 addText(`Email: ${getValue('contactoEmail')}`, 11, false, true);
 
-                // II. Detalles de la Actividad
+                // II. Activity Details
                 addSection('II. DETALLES DE LA ACTIVIDAD');
                 addText(`Nombre de la Actividad: ${getValue('nombreActividad')}`, 11, true, false);
                 addText(`Fecha: ${getValue('fechaActividad')}`, 11, false, false);
                 addText(`Participantes Esperados: ${getValue('participantesEsperados')}`, 11, false, false);
                 addText(`Objetivo General: ${getValue('objetivoGeneral')}`, 11, false, true);
 
-                // III. Equipo Organizador
+                // III. Organizing Team
                 addSection('III. EQUIPO ORGANIZADOR');
                 const miembros = [];
                 for (let i = 1; i <= 10; i++) {
@@ -414,15 +425,15 @@
                 } else {
                     addText('No se han especificado miembros del equipo organizador.', 11, false, false);
                 }
-                yPosition += 5;
+                yPosition += 5; // Additional space after the list of members
 
-                // IV. Recursos Necesarios
+                // IV. Required Resources
                 addSection('IV. RECURSOS NECESARIOS');
                 addText(`Presupuesto Estimado: ${getValue('presupuestoEstimado')}`, 11, true, false);
                 addText(`Materiales y Equipos: ${getValue('materialesEquipos')}`, 11, false, false);
                 addText(`Infraestructura: ${getValue('infraestructura')}`, 11, false, true);
 
-                // V. Programa Detallado
+                // V. Detailed Activity Program
                 addSection('V. PROGRAMA DETALLADO DE ACTIVIDADES');
                 
                 let hasActivities = false;
@@ -441,7 +452,7 @@
                         if (responsable !== 'No especificado') addText(`  • Responsable: ${responsable}`, 10, false, false);
                         if (recurso !== 'No especificado') addText(`  • Recursos: ${recurso}`, 10, false, false);
                         if (tiempo !== 'No especificado') addText(`  • Tiempo: ${tiempo}`, 10, false, false);
-                        yPosition += 3;
+                        yPosition += 8; // Increased space between activities
                     }
                 }
                 
@@ -449,18 +460,18 @@
                     addText('No se han especificado actividades en el programa detallado.', 11, false, true);
                 }
 
-                // VI. Estrategias de Comunicación
+                // VI. Communication Strategies
                 addSection('VI. ESTRATEGIAS DE COMUNICACIÓN');
                 addText(`Promoción de la actividad: ${getValue('promocionActividad')}`, 11, false, false);
                 addText(`Comunicación interna: ${getValue('comunicacionInterna')}`, 11, false, true);
 
-                // VII. Reuniones de Seguimiento
+                // VII. Follow-up Meetings
                 addSection('VII. REUNIONES DE SEGUIMIENTO');
                 addText(`Primera Reunión: ${getValue('reunion1')}`, 11, false, false);
                 addText(`Segunda Reunión: ${getValue('reunion2')}`, 11, false, false);
                 addText(`Tercera Reunión: ${getValue('reunion3')}`, 11, false, true);
 
-                // Pie de página
+                // Footer
                 const now = new Date();
                 const fecha = now.toLocaleDateString('es-ES');
                 const hora = now.toLocaleTimeString('es-ES');
@@ -469,14 +480,14 @@
                 doc.setFont('helvetica', 'normal');
                 doc.text(`Generado el ${fecha} a las ${hora}`, margin, 285);
 
-                // Guardar archivo
+                // Save file
                 const fechaActividad = getValue('fechaActividad', new Date().toISOString().slice(0, 10));
                 const filename = `Informe-Planificacion-${fechaActividad}.pdf`;
                 doc.save(filename);
                 
                 showMessage('PDF generado exitosamente', 'success');
                 
-                // Mostrar también el reporte en pantalla
+                // Also show the report on screen
                 generateReportContent();
                 
             } catch (error) {
@@ -595,15 +606,22 @@
 
         function copyReport() {
             const reportOutput = document.getElementById('reportOutput');
-            if (navigator.clipboard && reportOutput.innerText) {
-                navigator.clipboard.writeText(reportOutput.innerText)
-                    .then(() => showMessage('Informe copiado al portapapeles.', 'success'))
-                    .catch(err => {
-                        console.error('Error al copiar:', err);
-                        showMessage('No se pudo copiar el informe.', 'error');
-                    });
+            // Using execCommand for broader compatibility within iframes
+            if (reportOutput && reportOutput.innerText) {
+                try {
+                    const tempTextArea = document.createElement('textarea');
+                    tempTextArea.value = reportOutput.innerText;
+                    document.body.appendChild(tempTextArea);
+                    tempTextArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempTextArea);
+                    showMessage('Informe copiado al portapapeles.', 'success');
+                } catch (err) {
+                    console.error('Error al copiar:', err);
+                    showMessage('No se pudo copiar el informe.', 'error');
+                }
             } else {
-                 showMessage('No hay informe que copiar o el navegador no es compatible.', 'error');
+                 showMessage('No hay informe que copiar.', 'error');
             }
         }
 
@@ -615,10 +633,10 @@
             window.scrollTo(0, 0);
         }
 
-        // Verificar que jsPDF esté cargado
+        // Verification of jsPDF loading (optional, but good for debugging)
         window.addEventListener('load', function() {
             setTimeout(() => {
-                if (!jsPDF) {
+                if (!window.jspdf || !window.jspdf.jsPDF) {
                     showMessage('Error: jsPDF no se cargó correctamente', 'error');
                 } else {
                     console.log('jsPDF cargado correctamente');
